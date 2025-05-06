@@ -1,117 +1,61 @@
-# name: Like IT Docker CI/CD
+name: Like IT Docker CI/CD
 
-# on:
-#   push:
-#     branches:
-#       - develop
-#       - main
-#   workflow_dispatch:
+on:
+  push:
+    branches:
+      - develop
+      - main
+  workflow_dispatch:
 
-# jobs:
-#   setup-docker-tag:
-#     runs-on: ubuntu-latest
-#     outputs:
-#       docker_tag: ${{ steps.set-tag.outputs.tag }}
-#     steps:
-#       - name: Définir le tag Docker en fonction de la branche
-#         id: set-tag
-#         run: |
-#           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-#             echo "tag=prod" >> $GITHUB_OUTPUT
-#           elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
-#             echo "tag=pre-prod" >> $GITHUB_OUTPUT
-#           else
-#             echo "tag=pre-prod" >> $GITHUB_OUTPUT
-#           fi
+jobs:
+  setup-docker-tag:
+    runs-on: ubuntu-latest
+    outputs:
+      docker_tag: ${{ steps.set-tag.outputs.tag }}
+    steps:
+      - name: Définir le tag Docker en fonction de la branche
+        id: set-tag
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "tag=prod" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+            echo "tag=pre-prod" >> $GITHUB_OUTPUT
+          else
+            echo "tag=pre-prod" >> $GITHUB_OUTPUT
+          fi
 
-#   build-and-deploy-image:
-#     needs: setup-docker-tag
-#     runs-on: ubuntu-latest
-#     permissions:
-#       contents: read
-#       packages: write
-#     steps:
-#       - name: Checkout du dépôt
-#         uses: actions/checkout@v4
+  build-and-deploy-image:
+    needs: setup-docker-tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout du dépôt
+        uses: actions/checkout@v4
 
-#       - name: Valider le tag généré
-#         run: |
-#           TAG="${{ needs.setup-docker-tag.outputs.docker_tag }}"
-#           if [[ ! "$TAG" =~ ^[a-zA-Z0-9_.-]+$ ]]; then
-#             echo "Invalid tag format: $TAG"
-#             exit 1
-#           fi
+      - name: Valider le tag généré
+        run: |
+          TAG="${{ needs.setup-docker-tag.outputs.docker_tag }}"
+          if [[ ! "$TAG" =~ ^[a-zA-Z0-9_.-]+$ ]]; then
+            echo "Invalid tag format: $TAG"
+            exit 1
+          fi
 
-#       - name: Connexion à GitHub Container Registry
-#         uses: docker/login-action@v3
-#         with:
-#           registry: ghcr.io
-#           username: ${{ github.actor }}
-#           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Connexion à GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-#       - name: Activer Buildx
-#         uses: docker/setup-buildx-action@v2
+      - name: Activer Buildx
+        uses: docker/setup-buildx-action@v2
 
-#       - name: Construire et pousser l'image Docker
-#         uses: docker/build-push-action@v4
-#         with:
-#           context: .
-#           push: true
-#           platforms: linux/amd64,linux/arm64/v8
-#           tags: ghcr.io/baptiste-ferrand/like-it-front:${{ needs.setup-docker-tag.outputs.docker_tag || 'latest' }}
-
-#   deploy:
-#     needs: build-and-deploy-image
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout du dépôt
-#         uses: actions/checkout@v4
-
-#       - name: Déduire l'environnement
-#         id: env
-#         run: |
-#           if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
-#             echo "env=prod" >> $GITHUB_OUTPUT
-#           else
-#             echo "env=pre-prod" >> $GITHUB_OUTPUT
-#           fi
-
-#       - name: Créer fichier .env
-#         run: |
-#             cat <<EOF > .env
-#             # ========================
-#             # 📦 ENVIRONNEMENT
-#             # ========================
-#             ENV=${{ steps.env.outputs.env }}
-
-#       - name: Préparer clé SSH
-#         run: |
-#           echo "${{ secrets.RASPBERRY_SSH_KEY }}" > private_key.pem
-#           chmod 600 private_key.pem
-  
-#       - name: 🛠️ Préparer structure serveur distante
-#         run: |
-#           ssh -i private_key.pem -o StrictHostKeyChecking=no \
-#             ${{ secrets.RASPBERRY_USER }}@${{ secrets.RASPBERRY_HOST }} "\
-#               mkdir -p ~/front/${{ steps.env.outputs.env }}/nginx"
-
-#       - name: 🚚 Copier les fichiers sur le Raspberry
-#         run: |
-#           run: |
-#           # Copier les fichiers dans le dossier de l'environnement
-#           scp -i private_key.pem -o StrictHostKeyChecking=no .env \
-#             docker-compose.yml \
-#             ${{ secrets.RASPBERRY_USER }}@${{ secrets.RASPBERRY_HOST }}:~/front/${{ steps.env.outputs.env }}/
-
-#           # Copier le fichier front.conf dans le dossier nginx dédié
-#           scp -i private_key.pem -o StrictHostKeyChecking=no nginx/front.conf \
-#             ${{ secrets.RASPBERRY_USER }}@${{ secrets.RASPBERRY_HOST }}:~/front/${{ steps.env.outputs.env }}/nginx/
-      
-#           scp -i private_key.pem -o StrictHostKeyChecking=no deploy.sh \
-#             ${{ secrets.RASPBERRY_USER }}@${{ secrets.RASPBERRY_HOST }}:~/front/
-
-#       - name: 🚀 Lancer le déploiement via SSH
-#         run: |
-#           ssh -i private_key.pem -o StrictHostKeyChecking=no \
-#             ${{ secrets.RASPBERRY_USER }}@${{ secrets.RASPBERRY_HOST }} \
-#             "cd ~/front && chmod +x deploy.sh && ./deploy.sh ${{ steps.env.outputs.env }}"
+      - name: Construire et pousser l'image Docker
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64/v8
+          tags: ghcr.io/likes-it/front:${{ needs.setup-docker-tag.outputs.docker_tag || 'latest' }}
