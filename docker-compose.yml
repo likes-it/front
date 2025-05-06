@@ -1,7 +1,0 @@
-services:
-  frontend:
-    image: ghcr.io/baptiste-ferrand/like-it-front:${ENV}
-    container_name: like-it-front-${ENV}
-    restart: unless-stopped
-    ports:
-      - "${NGINX_PORT}:3000"
