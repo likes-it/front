@@ -1,61 +1,96 @@
-name: Like IT Docker CI/CD
+name: Node Docker CI/CD
 
 on:
-  push:
+  pull_request:
+    types: [closed]
     branches:
-      - develop
       - main
-  workflow_dispatch:
+      - develop
+      - 'feat/*'
+      - 'fix/*'
+      - 'breaking/*'
 
 jobs:
+  versioning:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Bump version
+        id: bump
+        run: |
+          chmod +x ./bump-version.js
+          VERSION=$(./bump-version.js)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Commit & push version bump
+        if: steps.bump.outputs.version != ''
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json
+          git commit -m "chore: bump version to ${{ steps.bump.outputs.version }}"
+          git push origin ${{ github.head_ref }}
+
   setup-docker-tag:
     runs-on: ubuntu-latest
+    needs: versioning
     outputs:
       docker_tag: ${{ steps.set-tag.outputs.tag }}
     steps:
-      - name: Définir le tag Docker en fonction de la branche
+      - name: Définir le tag Docker
         id: set-tag
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          TARGET="${{ github.ref }}"
+          if [[ "$TARGET" == "refs/heads/main" ]]; then
             echo "tag=prod" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+          elif [[ "$TARGET" == "refs/heads/develop" ]]; then
             echo "tag=pre-prod" >> $GITHUB_OUTPUT
           else
-            echo "tag=pre-prod" >> $GITHUB_OUTPUT
+            echo "tag=dev" >> $GITHUB_OUTPUT
           fi
 
-  build-and-deploy-image:
-    needs: setup-docker-tag
+  build-and-deploy:
+    needs: [versioning, setup-docker-tag]
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
     steps:
-      - name: Checkout du dépôt
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Valider le tag généré
-        run: |
-          TAG="${{ needs.setup-docker-tag.outputs.docker_tag }}"
-          if [[ ! "$TAG" =~ ^[a-zA-Z0-9_.-]+$ ]]; then
-            echo "Invalid tag format: $TAG"
-            exit 1
-          fi
-
-      - name: Connexion à GitHub Container Registry
+      - name: Login to GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Activer Buildx
+      - name: Setup Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Construire et pousser l'image Docker
+      - name: Build & push
         uses: docker/build-push-action@v4
         with:
           context: .
           push: true
-          platforms: linux/amd64,linux/arm64/v8
-          tags: ghcr.io/likes-it/front:${{ needs.setup-docker-tag.outputs.docker_tag || 'latest' }}
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ghcr.io/likes-it/api:${{ needs.versioning.outputs.version }}
+            ghcr.io/likes-it/api:${{ needs.setup-docker-tag.outputs.docker_tag }}
+            ghcr.io/likes-it/api:latest
