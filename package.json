@@ -15,7 +15,7 @@
   "dependencies": {
     "@types/react-router-dom": "^5.3.3",
     "axios": "^1.8.4",
-    "flowbite-react": "^0.11.7",
+    "flowbite-react": "0.10.2",
     "js-cookie": "^3.0.5",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

@@ -1,8 +1,10 @@
 import axios from 'axios';
 
 const axiosInstance = axios.create({
-  baseURL: 'https://like-it-api-pre-prod.coak.fr',
+  baseURL: import.meta.env.VITE_API_URL || 'https://like-it-api.coak.fr',
   withCredentials: true,
 });
+
+console.log(import.meta.env.VITE_API_URL);
 
 export default axiosInstance;
