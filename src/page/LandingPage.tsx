@@ -20,7 +20,7 @@ export default function LandingPage({ imageAddedKey }: LandingPageProps) {
   const fetchImages = async () => {
     setLoading(true);
     try {
-      const res = await axiosInstance.get('/images/');
+      const res = await axiosInstance.get('/images');
       setImages(res.data);
     } catch (err) {
       console.error('Erreur lors de la récupération des images :', err);
