@@ -75,9 +75,7 @@ export default function ImageCard({ imageUrl, initialLikes, initiallyLiked, imag
         <img src={imageUrl} alt="Image" className="w-full object-cover rounded-md" />
       </div>
   
-      {/* Conteneur absolu + flex */}
       <div className="absolute bottom-2 right-2 flex items-center space-x-2">
-        {/* --- Plus d'absolute ici : juste du padding, flex, etc. --- */}
         <button
           onClick={toggleLike}
           disabled={loading || !isAuthenticated}
@@ -104,7 +102,7 @@ export default function ImageCard({ imageUrl, initialLikes, initiallyLiked, imag
       {hearts.map((id) => (
         <FaHeart
           key={id}
-          className="absolute bottom-10 right-5 text-red-500 animate-bounce opacity-70 w-4 h-4"
+          className="absolute bottom-10 right-5 text-red-500 animate-bounce opacity-70 w-40 h-40"
           style={{ animation: `float-up 1s ease-out forwards`, transform: `translateY(-${Math.random() * 20}px)` }}
         />
       ))}
@@ -112,7 +110,7 @@ export default function ImageCard({ imageUrl, initialLikes, initiallyLiked, imag
       <style>{`
         @keyframes float-up {
           0% { opacity: 0.7; transform: translateY(0); }
-          100% { opacity: 0; transform: translateY(-40px); }
+          100% { opacity: 0; transform: translateY(-60px); }
         }
       `}</style>
     </div>
