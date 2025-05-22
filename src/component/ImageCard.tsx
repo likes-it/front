@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FaHeart } from 'react-icons/fa';
+import { FaHeart, FaTrash } from 'react-icons/fa';
 import axiosInstance from '../utils/auth/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -9,9 +9,10 @@ interface ImageCardProps {
   initialLikes: number;
   initiallyLiked: boolean;
   imageId: string;
+  owned: boolean,
 }
 
-export default function ImageCard({ imageUrl, initialLikes, initiallyLiked, imageId }: ImageCardProps) {
+export default function ImageCard({ imageUrl, initialLikes, initiallyLiked, imageId, owned }: ImageCardProps) {
   const { isAuthenticated, setAuthenticated } = useAuth();
 
   const [liked, setLiked] = useState(initiallyLiked);
@@ -47,6 +48,18 @@ export default function ImageCard({ imageUrl, initialLikes, initiallyLiked, imag
     }
   };
 
+  const toggleDelted = async () =>{
+
+    try{
+      await axiosInstance.delete(`/images/${imageId}`);
+      toast.success("Image supprimée avec succès.");
+      window.location.reload();
+    } catch (error: any) {
+      console.error('Erreur lors de la suppression de l\'image :', error);
+      toast.error("Impossible de supprimer l'image.");
+    }
+  }
+
   useEffect(() => {
     if (hearts.length > 0) {
       const timeout = setTimeout(() => {
@@ -61,6 +74,33 @@ export default function ImageCard({ imageUrl, initialLikes, initiallyLiked, imag
       <div className="w-full h-64 overflow-hidden rounded-md">
         <img src={imageUrl} alt="Image" className="w-full object-cover rounded-md" />
       </div>
+  
+      {/* Conteneur absolu + flex */}
+      <div className="absolute bottom-2 right-2 flex items-center space-x-2">
+        {/* --- Plus d'absolute ici : juste du padding, flex, etc. --- */}
+        <button
+          onClick={toggleLike}
+          disabled={loading || !isAuthenticated}
+          className={`px-3 py-2 flex items-center gap-1 rounded-full shadow transition-transform ${
+            isAuthenticated
+              ? 'bg-white dark:bg-gray-700 hover:scale-110'
+              : 'bg-gray-200 dark:bg-gray-600 cursor-not-allowed'
+          }`}
+        >
+          <FaHeart className={`w-5 h-5 ${liked ? 'text-red-600' : 'text-gray-400'}`} />
+          <span className="text-sm text-gray-700 dark:text-gray-300">{likes}</span>
+        </button>
+  
+        {owned && (
+          <button
+            onClick={toggleDelted}
+            className="px-3 py-2 flex items-center gap-1 rounded-full shadow transition-transform bg-white dark:bg-gray-700 hover:scale-110"
+          >
+            <FaTrash className="w-5 h-5 text-red-600" />
+          </button>
+        )}
+      </div>
+  
       {hearts.map((id) => (
         <FaHeart
           key={id}
@@ -68,24 +108,13 @@ export default function ImageCard({ imageUrl, initialLikes, initiallyLiked, imag
           style={{ animation: `float-up 1s ease-out forwards`, transform: `translateY(-${Math.random() * 20}px)` }}
         />
       ))}
-      <button
-        onClick={toggleLike}
-        disabled={loading || !isAuthenticated}
-        className={`absolute bottom-2 right-2 px-3 py-2 flex items-center gap-1 rounded-full shadow transition-transform ${
-          isAuthenticated ? 'bg-white dark:bg-gray-700 hover:scale-110' : 'bg-gray-200 dark:bg-gray-600 cursor-not-allowed'
-        }`}
-      >
-        <FaHeart className={`w-5 h-5 ${liked ? 'text-red-600' : 'text-gray-400'}`} />
-        <span className="text-sm text-gray-700 dark:text-gray-300">{likes}</span>
-      </button>
-      <style>
-        {`
-          @keyframes float-up {
-            0% { opacity: 0.7; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-40px); }
-          }
-        `}
-      </style>
+  
+      <style>{`
+        @keyframes float-up {
+          0% { opacity: 0.7; transform: translateY(0); }
+          100% { opacity: 0; transform: translateY(-40px); }
+        }
+      `}</style>
     </div>
   );
 }
