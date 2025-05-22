@@ -28,7 +28,7 @@ export default function UploadImageModal({ open, onClose, onImageAdded }: Upload
       };
       reader.readAsDataURL(selectedFile);
     } else {
-      alert('Fichier non valide. Formats acceptés : JPG, PNG, GIF, WEBP et taille max 999Ko.');
+      toast.error("Fichier non valide. Formats acceptés : JPG, PNG, GIF, WEBP et taille max 999Ko.");
     }
   };
 
