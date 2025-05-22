@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import axiosInstance from '../utils/auth/axiosInstance';
 import { useAuth } from '../context/AuthContext';
 import { setToken } from '../utils/auth/token';
+import { toast } from 'react-toastify'
+
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -28,9 +30,10 @@ export default function LoginPage() {
         setToken(token);
         setAuthenticated(true);
         navigate('/');
+        toast.success('Bienvenue !');
       }
     } catch (error) {
-      console.error('Erreur lors de la connexion :', error);
+      toast.error('Email ou mot de passe incorrect.');
     }
   };
 
