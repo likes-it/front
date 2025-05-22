@@ -16,6 +16,7 @@ interface MinePageProps {
 export default function MinePage({ imageAddedKey }: MinePageProps) {
   const [images, setImages] = useState<ImageData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasFetchedOnce, setHasFetchedOnce] = useState(false)
 
   const fetchImages = async () => {
     setLoading(true);
@@ -26,6 +27,7 @@ export default function MinePage({ imageAddedKey }: MinePageProps) {
       console.error('Erreur lors de la récupération des images :', err);
     } finally {
       setLoading(false);
+      setHasFetchedOnce(true)
     }
   };
 
@@ -43,7 +45,13 @@ export default function MinePage({ imageAddedKey }: MinePageProps) {
           <div className="mt-8 flex justify-center">
             <Spinner size="xl" />
           </div>
-        ) : (
+        ) : !hasFetchedOnce ? (
+            null
+        ) : images.length === 0 ? (
+            <div className="mt-8 flex justify-center">
+              <img className="h-auto max-w-full" src="https://media1.tenor.com/m/WnjJsVOwoJQAAAAC/john-travolta-well.gif" alt="image description" />
+            </div>
+          ) : (
           <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {images.map((img) => (
               <ImageCard
@@ -57,11 +65,7 @@ export default function MinePage({ imageAddedKey }: MinePageProps) {
             ))}
           </div>
         )}
-        {images.length === 0 && (
-          <div className="mt-8 flex justify-center">
-            <img className="h-auto max-w-full" src="https://media1.tenor.com/m/WnjJsVOwoJQAAAAC/john-travolta-well.gif" alt="image description" />
-          </div>
-        )}
+        
       </div>
     </section>
   );
