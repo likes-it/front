@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import axiosInstance from '../utils/auth/axiosInstance';
-import ImageCard from '../component/ImageCard';
+import Gallery from '../component/Gallery';
 import { Spinner } from 'flowbite-react';
 
 interface ImageData {
@@ -73,18 +73,7 @@ export default function LandingPage({ imageAddedKey }: LandingPageProps) {
             <Spinner size="xl" />
           </div>
         ) : (
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {images.map((img) => (
-              <ImageCard
-                key={img.id}
-                imageId={img.id}
-                imageUrl={img.data_url}
-                initialLikes={img.like_count}
-                initiallyLiked={img.initiallyLiked}
-                owned={false}
-              />
-            ))}
-          </div>
+          <Gallery images={images} />
         )}
       </div>
     </section>
