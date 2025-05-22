@@ -31,7 +31,7 @@ export default function MinePage({ imageAddedKey }: MinePageProps) {
 
   useEffect(() => {
     fetchImages();
-  }, [imageAddedKey]); // 🔁 re-fetch à chaque ajout
+  }, [imageAddedKey]); 
 
   return (
     <section className="dark:bg-gray-900 min-h-screen">
