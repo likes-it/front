@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import axiosInstance from '../utils/auth/axiosInstance';
-import ImageCard from '../component/ImageCard';
+import Gallery from '../component/Gallery';
 import { Spinner } from 'flowbite-react';
 
 interface ImageData {
@@ -9,19 +9,47 @@ interface ImageData {
   like_count: number;
 }
 
+interface LikedData {
+  id: string;
+  image_id: string;
+  user_id: string;
+  liked: boolean;
+}
+
 interface LandingPageProps {
   imageAddedKey?: number;
 }
 
 export default function LandingPage({ imageAddedKey }: LandingPageProps) {
-  const [images, setImages] = useState<ImageData[]>([]);
+  const [images, setImages] = useState<(ImageData & { initiallyLiked: boolean })[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchImages = async () => {
+  const fetchAll = async () => {
     setLoading(true);
     try {
-      const res = await axiosInstance.get('/images');
-      setImages(res.data);
+      const imgRes = await axiosInstance.get<ImageData[]>('/images');
+      const allImages = imgRes.data;
+  
+      let likedIds = new Set<string>();
+      try {
+        const likeRes = await axiosInstance.get<LikedData[]>('/images/likes/mine');
+        likedIds = new Set(
+          likeRes.data
+            .filter((l) => l.liked)
+            .map((l) => l.image_id)
+        );
+      } catch (err: any) {
+        if (err.response?.status !== 401) {
+          console.error('Erreur inattendue lors du fetch des likes :', err);
+        }
+      }
+  
+      const merged = allImages.map((img) => ({
+        ...img,
+        initiallyLiked: likedIds.has(img.id),
+      }));
+  
+      setImages(merged);
     } catch (err) {
       console.error('Erreur lors de la récupération des images :', err);
     } finally {
@@ -30,9 +58,10 @@ export default function LandingPage({ imageAddedKey }: LandingPageProps) {
   };
 
   useEffect(() => {
-    fetchImages();
-  }, [imageAddedKey]); // 🔁 re-fetch à chaque ajout
+    fetchAll();
+  }, [imageAddedKey]);
 
+  
   return (
     <section className="dark:bg-gray-900 min-h-screen">
       <div className="py-8 px-4 mx-auto max-w-screen-xl text-center lg:py-16 z-10 relative">
@@ -44,17 +73,7 @@ export default function LandingPage({ imageAddedKey }: LandingPageProps) {
             <Spinner size="xl" />
           </div>
         ) : (
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {images.map((img) => (
-              <ImageCard
-                key={img.id}
-                imageId={img.id}
-                imageUrl={img.data_url}
-                initialLikes={img.like_count}
-                initiallyLiked={false}
-              />
-            ))}
-          </div>
+          <Gallery images={images} />
         )}
       </div>
     </section>
