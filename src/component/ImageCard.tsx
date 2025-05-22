@@ -10,9 +10,10 @@ interface ImageCardProps {
   initiallyLiked: boolean;
   imageId: string;
   owned: boolean,
+  onDeleted?: (id: string) => void
 }
 
-export default function ImageCard({ imageUrl, initialLikes, initiallyLiked, imageId, owned }: ImageCardProps) {
+export default function ImageCard({ imageUrl, initialLikes, initiallyLiked, imageId, owned, onDeleted }: ImageCardProps) {
   const { isAuthenticated, setAuthenticated } = useAuth();
 
   const [liked, setLiked] = useState(initiallyLiked);
@@ -53,7 +54,9 @@ export default function ImageCard({ imageUrl, initialLikes, initiallyLiked, imag
     try{
       await axiosInstance.delete(`/images/${imageId}`);
       toast.success("Image supprimée avec succès.");
-      window.location.reload();
+      if (onDeleted) {
+        onDeleted(imageId);
+      }
     } catch (error: any) {
       console.error('Erreur lors de la suppression de l\'image :', error);
       toast.error("Impossible de supprimer l'image.");
