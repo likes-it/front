@@ -37,7 +37,7 @@ export default function LandingPage({ imageAddedKey }: LandingPageProps) {
     <section className="dark:bg-gray-900 min-h-screen">
       <div className="py-8 px-4 mx-auto max-w-screen-xl text-center lg:py-16 z-10 relative">
         <h1 className="mb-4 text-4xl font-extrabold tracking-tight leading-none text-gray-900 md:text-5xl lg:text-6xl dark:text-white">
-          Gallery Photo 🤑
+          Gallery TOPHO 🤔
         </h1>
         {loading ? (
           <div className="mt-8 flex justify-center">
