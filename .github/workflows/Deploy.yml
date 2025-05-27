@@ -95,7 +95,7 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           build-args: |
-            VITE_API_URL: ${{ needs.setup-docker-tag.outputs.vite_api_url }}
+            VITE_API_URL=${{ needs.setup-docker-tag.outputs.vite_api_url }}
           tags: |
             ghcr.io/likes-it/front:${{ needs.versioning.outputs.version }}
             ghcr.io/likes-it/front:${{ needs.setup-docker-tag.outputs.docker_tag }}
