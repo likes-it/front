@@ -51,6 +51,7 @@ jobs:
     needs: versioning
     outputs:
       docker_tag: ${{ steps.set-tag.outputs.tag }}
+      vite_api_url: ${{ steps.set-tag.outputs.vite_api_url }}
     steps:
       - name: Définir le tag Docker
         id: set-tag
@@ -58,10 +59,13 @@ jobs:
           TARGET="${{ github.ref }}"
           if [[ "$TARGET" == "refs/heads/main" ]]; then
             echo "tag=prod" >> $GITHUB_OUTPUT
+            echo "vite_api_url=${{ vars.VITE_API_URL_PROD }}" >> $GITHUB_OUTPUT
           elif [[ "$TARGET" == "refs/heads/develop" ]]; then
             echo "tag=pre-prod" >> $GITHUB_OUTPUT
+            echo "vite_api_url=${{ vars.VITE_API_URL_PRE_PROD }}" >> $GITHUB_OUTPUT
           else
             echo "tag=dev" >> $GITHUB_OUTPUT
+            echo "vite_api_url=${{ vars.VITE_API_URL_PRE_PROD }}" >> $GITHUB_OUTPUT
           fi
 
   build-and-deploy:
@@ -90,6 +94,8 @@ jobs:
           context: .
           push: true
           platforms: linux/amd64,linux/arm64
+          args: |
+            VITE_API_URL: ${{ needs.setup-docker-tag.outputs.vite_api_url }}
           tags: |
             ghcr.io/likes-it/front:${{ needs.versioning.outputs.version }}
             ghcr.io/likes-it/front:${{ needs.setup-docker-tag.outputs.docker_tag }}
